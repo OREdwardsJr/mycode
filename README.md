@@ -5,7 +5,7 @@ This repo will be utilized as I go through the Python/Linux portion of the Amazo
 
 ## Getting Started
 
-- Pending
+- Instructions to follow
 
 ### Prerequisites
 
