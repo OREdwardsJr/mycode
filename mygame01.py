@@ -5,11 +5,11 @@
 import random
 
 class Player():
-    def __init__(self, name, xp=100, max_xp=100, location=None, has_key=False):
+    def __init__(self, name, xp=100, max_xp=100, location=0, has_key=False):
         self.name = name
         self.xp = xp
         self.max_xp = max_xp
-        self.location = location #Stores which room Player currently is in
+        self.location = location #Stores which room Player currently is in - Player starts in rooms_map[0]
         self.has_key = has_key
 
     def heal(self, potion=None):
@@ -29,13 +29,14 @@ class Monster():
 
 
 class Room():
-    def __init__(self, name, has_key=False, is_garden=False, can_transport=False, monster=None, potion=None):
+    def __init__(self, name, has_key=False, is_garden=False, can_transport=False, monster=None, potion=None, _id=-1):
         self.name = name
         self.has_key = has_key
         self.is_garden = is_garden
         self.can_transport = can_transport
         self.monster = monster
         self.potion = potion
+        self.id = _id
 
 
 class Potion():
@@ -64,6 +65,10 @@ def setup_rooms(rooms, monsters, potions):
     room[5].potion = potions[0]
     room[6].potion = potions[1]
 
+    # assign IDs
+    for i in range(len(rooms)):
+        rooms[i].id = i
+
     return rooms
 
 def showInstructions():
@@ -90,11 +95,9 @@ def showStatus():
     print("---------------------------")
 
 
-# if demo == True then the game will print the room index which helps us understand where we are
-demo = False
-
-# create rooms, potions, and monsters
-rooms = [
+def setup_game():
+    # create rooms, potions, and monsters
+    rooms = [
             Room("Kitchen"),
             Room("Bathroom 1"),
             Room("Bathroom 2"),
@@ -105,28 +108,22 @@ rooms = [
             Room("Basement"),
             Room("Spare Bedroom"),
             Room("Garden")
-        ]
+            ]
 
-potions = [
-            Potion(10),
-            Potion(25)
-          ]
+    potions = [Potion(10), Potion(25)]
 
-monsters = [
-            Monster(25),
-            Monster(50)
-           ]
+    monsters = [Monster(25), Monster(50)]
 
-rooms = setup_rooms(rooms, monsters, potions)
-rooms.append(Rooms("Mystery Room")) # this allows mystery_room to always be located at rooms[-1]
+    rooms = setup_rooms(rooms, monsters, potions)
    
-# a dictionary linking a room to other rooms
-rooms_map = {
+    # a dictionary linking a room to other rooms
+    rooms_map = {
             0: {
                 'room' : rooms[0],
                 'South' : rooms[3],
                 'East' : rooms[1],
-                'doors' : ['South', 'East']
+                'West' : rooms[6],
+                'doors' : ['South', 'East', 'West']
                 },
             1: {
                 'room': rooms[1],
@@ -162,7 +159,8 @@ rooms_map = {
             6: {
                 'room' : rooms[6],
                 'East' : rooms[7],
-                'doors' : ['East']
+                'North' : rooms[0],
+                'doors' : ['East', 'North']
                 },
             7: {
                 'room' : rooms[7],
@@ -182,7 +180,16 @@ rooms_map = {
                 'North' : rooms[5],
                 'doors' : ['West', 'North']
                 }
-         }
+            }
+
+    # create user
+    username = input('Enter player name')
+    player = Player(username)
+
+    return [rooms_map, rooms, monsters, potions, player]
+
+def play_game():
+
 
 # LEFT OFF HERE #
 '''
@@ -192,9 +199,9 @@ TODO:
         - build logic to check player health and end accordingly
         - check whether user has delivered key to garden
 '''
+# Start Game
+play_game()
 
-# start the player in the Hall
-currentRoom = 'Hall'
 
 showInstructions()
 
