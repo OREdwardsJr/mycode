@@ -12,15 +12,13 @@ class Player():
         self.location = location #Stores which room Player currently is in - Player starts in rooms_map[0]
         self.has_key = has_key
 
-    def heal(self, potion=None):
-        if potion:
-            self.xp += potion.strength
-            if self.xp > self.max_xp:
-                self.xp = self.max_xp
+    def heal(self, potion):
+        self.xp += potion.strength
+        
+        self.xp = self.xp if (self.xp <= self.max_xp) else self.max_xp
 
-    def receive_damage(self, monster=None):
-        if monster:
-            self.xp -= monster.strength
+    def receive_damage(self, monster):
+        self.xp -= monster.strength
 
 
 class Monster():
@@ -38,66 +36,26 @@ class Room():
         self.potion = potion
         self.id = _id
 
+    def __repr__(self):
+        return self.name
+
 
 class Potion():
     def __init__(self, strength):
         self.strength = strength
 
 
-def setup_rooms(rooms, monsters, potions):
-    '''
-    If you shuffle rooms before assignment then items will always be in the same index in rooms_map.keys()
-        - It isn't ideal but it works given the user will start in a random room and won't have access to the rooms_map
+class Game():
+    def __init__(self, rooms_map={}, rooms=[], monsters=[], potions=[], player=None):
+        self.rooms_map = rooms_map
+        self.rooms = rooms
+        self.monsters = monsters
+        self.potions = potions
+        self.player = player
 
-    If you shuffle afterwards then the items will always be in the same room (EG: Kitchen could always have the key)
-
-    TODO: Find a workaround if time permits
-    '''
-    # shuffle rooms
-    random.shuffle(rooms)
-
-    # place content into rooms
-    room[0].has_key = True
-    room[1].is_garden = True
-    room[2].can_transport = True
-    room[3].monster = monsters[0]
-    room[4].monster = monsters[1]
-    room[5].potion = potions[0]
-    room[6].potion = potions[1]
-
-    # assign IDs
-    for i in range(len(rooms)):
-        rooms[i].id = i
-
-    return rooms
-
-def showInstructions():
-    """"Get to the Garden with a key and a potion to win! Avoid the monsters! Commands include go direction and get item."""
-    #print a main menu and the commands
-    print('''
-    RPG Game
-    ========
-    Commands:
-      go [direction]
-      get [item]
-    ''')
-
-def showStatus():
-    """determine the current status of the player"""
-    # print the player's current location
-    print('---------------------------')
-    print('You are in the ' + currentRoom)
-    # print what the player is carrying
-    print('Inventory:', inventory)
-    # check if there's an item in the room, if so print it
-    if "item" in rooms[currentRoom]:
-      print('You see a ' + rooms[currentRoom]['item'])
-    print("---------------------------")
-
-
-def setup_game():
-    # create rooms, potions, and monsters
-    rooms = [
+    def setup_game(self):
+        # create rooms, potions, and monsters
+        self.rooms = [
             Room("Kitchen"),
             Room("Bathroom 1"),
             Room("Bathroom 2"),
@@ -108,88 +66,263 @@ def setup_game():
             Room("Basement"),
             Room("Spare Bedroom"),
             Room("Garden")
-            ]
+        ]
+        self.potions = [Potion(10), Potion(35), Potion(10)]
+        self.monsters = [Monster(25), Monster(50)]
 
-    potions = [Potion(10), Potion(25)]
+        # create user
+        username = input('Enter player name')
+        self.player = Player(username)
 
-    monsters = [Monster(25), Monster(50)]
+        self.showInstructions()
 
-    rooms = setup_rooms(rooms, monsters, potions)
-   
-    # a dictionary linking a room to other rooms
-    rooms_map = {
+    def setup_rooms(self):
+        '''
+        Room objects are randomly stored in the nodes of an undirected graph. 
+        Items (potions, monsters, key, etc...) are randomly assigned to rooms
+            - Rooms may have multiple items of different categories
+            - Rooms hold <= 1 of the same item type
+            - EG: The kitchen may hold a key and monster but may not hold a a key and two monsters given the two monsters
+                    are the same item type.
+        '''
+        # shuffle rooms into random nodes 
+        random.shuffle(self.rooms)
+
+        # assign room IDs
+        for i in range(len(self.rooms)):
+            self.rooms[i].id = i
+
+        # -----------------------------------------------
+        # Randomly place content into rooms
+
+        # set key
+        i = random.randrange(0, len(self.rooms))
+        self.rooms[i].has_key = True
+
+        # set garden
+        i = random.randrange(0, len(self.rooms))
+        self.rooms[i].is_garden = True
+
+        # set transport
+        i = random.randrange(0, len(self.rooms))
+        self.rooms[i].can_transport = True
+
+        # set monsters (while loop ensures rooms occupy <= 1 monster)
+        i = j = random.randrange(0, len(self.rooms))
+        self.rooms[i].monster = self.monsters[0]
+
+        while (j == i):
+            j = random.randrange(0, len(self.rooms))
+            
+        self.rooms[j].monster = self.monsters[1]
+
+        # set potions (while loop ensures rooms occupy <= 1 potion)
+        i = j = k = random.randrange(0, len(self.rooms))
+        self.rooms[i].potion = self.potions[0]
+
+        while (j == i):
+            j = random.randrange(0, len(self.rooms))
+
+        self.rooms[j].potion = self.potions[1]
+
+        while (k == i):
+            k = random.randrange(0, len(self.rooms))
+
+        self.rooms[k].potion = self.potions[2]
+        # -----------------------------------------------
+
+        # fill graph (rooms mapping)
+        self.rooms_map = {
             0: {
-                'room' : rooms[0],
-                'South' : rooms[3],
-                'East' : rooms[1],
-                'West' : rooms[6],
+                'room' : self.rooms[0],
+                'South' : self.rooms[3],
+                'East' : self.rooms[1],
+                'West' : self.rooms[6],
                 'doors' : ['South', 'East', 'West']
                 },
             1: {
-                'room': rooms[1],
-                'West': rooms[0],
+                'room': self.rooms[1],
+                'West': self.rooms[0],
                 'doors' : ['West']
                 },
             2: {
-                'room' : rooms[2],
-                'South' : rooms[7],
-                'East' : rooms[3],
+                'room' : self.rooms[2],
+                'South' : self.rooms[7],
+                'East' : self.rooms[3],
                 'doors' : ['South', 'East']
                 },
             3: {
-                'room' : rooms[3],
-                'West' : rooms[2],
-                'East' : rooms[4],
-                'North' : rooms[0],
+                'room' : self.rooms[3],
+                'West' : self.rooms[2],
+                'East' : self.rooms[4],
+                'North' : self.rooms[0],
                 'doors' : ['West', 'East']
                 },
             4: {
-                'room' : rooms[4],
-                'West' : rooms[3],
-                'East' : rooms[5],
-                'South' : rooms[8],
+                'room' : self.rooms[4],
+                'West' : self.rooms[3],
+                'East' : self.rooms[5],
+                'South' : self.rooms[8],
                 'doors' : ['West', 'East', 'South']
                 },
             5: {
-                'room' : rooms[5],
-                'West' : rooms[4],
-                'South' : rooms[9],
+                'room' : self.rooms[5],
+                'West' : self.rooms[4],
+                'South' : self.rooms[9],
                 'doors' : ['West', 'South']
                 },
             6: {
-                'room' : rooms[6],
-                'East' : rooms[7],
-                'North' : rooms[0],
+                'room' : self.rooms[6],
+                'East' : self.rooms[7],
+                'North' : self.rooms[0],
                 'doors' : ['East', 'North']
                 },
             7: {
-                'room' : rooms[7],
-                'West' : rooms[6],
-                'North' : rooms[2],
+                'room' : self.rooms[7],
+                'West' : self.rooms[6],
+                'North' : self.rooms[2],
                 'doors' : ['West', 'North']
                 },
             8: {
-                'room' : rooms[8],
-                'North' : rooms[4],
-                'East' : rooms[9],
+                'room' : self.rooms[8],
+                'North' : self.rooms[4],
+                'East' : self.rooms[9],
                 'doors' : ['North', 'East']
                 },
             9: {
-                'room' : rooms[9],
-                'West' : rooms[8],
-                'North' : rooms[5],
+                'room' : self.rooms[9],
+                'West' : self.rooms[8],
+                'North' : self.rooms[5],
                 'doors' : ['West', 'North']
                 }
             }
 
-    # create user
-    username = input('Enter player name')
-    player = Player(username)
+    def enter_room(self, choice):
+        location = self.player.location
 
-    return [rooms_map, rooms, monsters, potions, player]
+        self.player.location = self.rooms_map[location][choice]
 
-def play_game():
+    def visit_mystery_room(self):
+        num = random.randint(0, 10)
 
+        if num < 3:
+            print('You have a super strong potion!! Your XP has been reset to the maximum level')
+
+            self.player.xp = self.player.max_xp
+        elif 3 <= num < 6:
+            print('Oh no! You ran into the strongest monster there is!!')
+
+            self.player.xp -= 65
+        else:
+            print('You have been transported to the garden! I hope you have the key with you!')
+
+            for room in self.rooms:
+                if (room.name == "Garden"):
+                    self.player.location = room.id
+
+        print(f'{self.player.name}, your health is {self.player.xp}. You are being returned to {self.rooms_map[self.player.location]["room"]}')
+
+    def showInstructions(self):
+        """"Get to the Garden with a key and a potion to win! Avoid the monsters! Commands include go direction and get item."""
+        #print a main menu and the commands
+        print(f'''
+        Welcome, {self.player}! Your goal is to acquire the key and bring it to the Garden where fortune awaits you!
+
+        You must wander through the castle in search of the key. Be wary! Monsters are hidden in some of these rooms.
+
+        Good luck!
+
+        RPG Game
+        ========
+        Commands:
+        go [direction]
+        ''')
+    
+    def play_game(self):        
+        active_game = True
+        choice = ""
+
+        self.showInstructions()
+
+        while active_game:
+            rooms_map_key = self.rooms_map[self.player.location] 
+            room = rooms_map_key['room']
+            doors = rooms_map_key['doors']
+
+            #If room has key
+            if (self.player.has_key == False) and (room.has_key):
+                print('Congrats, you have found the key! You can achieve victory by reaching the Garden')
+
+                self.player.has_key = True
+
+            #If room has potion
+            if (room.potion):
+                print('You have found potion!')
+
+                self.player.heal()
+
+                print(f'Your health is now: {self.player.xp}')
+
+            #If room has monster
+            if (room.monster != None):
+                print(f'''Oh no you ran into a monster!!!
+                          It has a strength of {room.monster.strength} and has attacked you!
+                          Beware, the monster has jumped to a random room. Its still out there!!''')
+
+                self.player.receive_damage(room.monster)
+                self.place_monster_in_new_room(room.monster)
+
+                print(f'Your remaining xp is: {self.player.xp}')
+
+            #If xp <= 0
+            if (self.player.xp <= 0):
+                print('Sorry! You have been defeated! Game over :(')
+                exit()
+
+            #If room can transport to mystery room
+            if (room.can_transport):
+                print(f'''This room has magical powers and can transport to a mystery room!
+                          The mystery room consists of healing potion, a monster, or direct access
+                          to the garden.''')
+
+                visit_mystery_room = input('Would you like to visit mystery room?!? (y/n)').lower()
+
+                if (visit_mystery_room == 'y'):
+                    room = self.visit_mystery_room(room) # Updates room to garden or leaves as is
+
+            #If room is garden
+            if (room.is_garden):
+                if (self.player.has_key):
+                    print('Congrats!!! You have obtained the fortune and won the game!')
+                    exit()
+
+                print('Here is the fortune!! Unfortunately, you need the key to access it.')
+
+            while choice not in doors:
+                print(f'''{self.player}, you are located in {room}.
+                        You can go through the following doors: {doors}.
+                        Your health is {self.player.xp}
+                ''')
+
+                choice = input('Which door would you like to enter? (Enter "quit" to end game)').title()
+
+                if (choice.lower() == "quit"):
+                    print('Goodbye!')
+                    exit()
+
+            self.enter_room(choice)
+        
+
+def main():
+    game = Game()
+
+    game.setup_game()
+    game.setup_rooms()
+    game.play_game()
+
+# Run Script
+if __name__ == "__main__":
+    main()
 
 # LEFT OFF HERE #
 '''
@@ -258,5 +391,4 @@ while True:
     if 'item' in rooms[currentRoom] and 'monster' in rooms[currentRoom]['item']:
         print('A monster has got you... GAME OVER!')
         break
-
 
