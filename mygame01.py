@@ -1,6 +1,4 @@
 #!/usr/bin/python3
-"""Driving a simple game framework with
-   a dictionary object | Alta3 Research"""
 
 import random
 
@@ -67,14 +65,14 @@ class Game():
             Room("Spare Bedroom"),
             Room("Garden")
         ]
-        self.potions = [Potion(10), Potion(35), Potion(10)]
+        self.potions = [Potion(10), Potion(15), Potion(35)]
         self.monsters = [Monster(25), Monster(50)]
 
         # create user
         username = input('Enter player name')
         self.player = Player(username)
+        print()
 
-        self.showInstructions()
 
     def setup_rooms(self):
         '''
@@ -100,8 +98,9 @@ class Game():
         self.rooms[i].has_key = True
 
         # set garden
-        i = random.randrange(0, len(self.rooms))
-        self.rooms[i].is_garden = True
+        for room in self.rooms:
+            if (room.name == "Garden"):
+                room.is_garden = True
 
         # set transport
         i = random.randrange(0, len(self.rooms))
@@ -156,7 +155,7 @@ class Game():
                 'West' : self.rooms[2],
                 'East' : self.rooms[4],
                 'North' : self.rooms[0],
-                'doors' : ['West', 'East']
+                'doors' : ['West', 'East', 'North']
                 },
             4: {
                 'room' : self.rooms[4],
@@ -200,79 +199,105 @@ class Game():
     def enter_room(self, choice):
         location = self.player.location
 
-        self.player.location = self.rooms_map[location][choice]
+        self.player.location = self.rooms_map[location][choice].id
 
-    def visit_mystery_room(self):
-        num = random.randint(0, 10)
+    def visit_mystery_room(self, room):
+        num = random.randint(0, len(self.rooms) - 1)
 
         if num < 3:
-            print('You have a super strong potion!! Your XP has been reset to the maximum level')
+            self.player.heal(Potion(self.player.max_xp))
 
-            self.player.xp = self.player.max_xp
+            print('You found a super strong potion!! Your XP has been reset to the maximum level')
         elif 3 <= num < 6:
-            print('Oh no! You ran into the strongest monster there is!!')
+            self.player.receive_damage(Monster(65))
 
-            self.player.xp -= 65
+            print('Oh no! You ran into the strongest monster there is and have been attacked')
         else:
-            print('You have been transported to the garden! I hope you have the key with you!')
-
             for room in self.rooms:
                 if (room.name == "Garden"):
                     self.player.location = room.id
+                    break
+
+            print('You have been transported to the garden! I hope you have the key with you!')
 
         print(f'{self.player.name}, your health is {self.player.xp}. You are being returned to {self.rooms_map[self.player.location]["room"]}')
+        
+        return room
 
-    def showInstructions(self):
-        """"Get to the Garden with a key and a potion to win! Avoid the monsters! Commands include go direction and get item."""
-        #print a main menu and the commands
+    def place_monster_into_new_room(self, monster):
+        for room in self.rooms:
+            if room.monster == monster:
+                room.monster = None
+
+        i = random.randint(0, len(self.rooms) - 1)
+
+        self.rooms[i].monster = monster
+
+    def show_instructions(self):
         print(f'''
-        Welcome, {self.player}! Your goal is to acquire the key and bring it to the Garden where fortune awaits you!
+        Welcome, {self.player.name}! Your goal is to acquire the key and bring it to the Garden where fortune awaits you!
 
-        You must wander through the castle in search of the key. Be wary! Monsters are hidden in some of these rooms.
+        You must wander through the castle in search of the key. Be wary! Monsters are hidden in some of these rooms and
+        can move to new rooms after attacking you!
+
+        There are 3 potions within the castle that can increase your XP up until the max level of {self.player.xp}.
+
+        Once you've consumed a potion it cannot be reused. 
+        If you use all of your potions then the Mystery Room has an unlimited amount and MAY heal you.
+        Be wary, though!
+        Visiting the Mystery Room also brings a large risk.
+
+        Return the key to the garden before your XP reaches 0 or below to win!
+
+        If your XP reaches 0 or below then you will fail your mission.
+
+        Here's a hint: While you aren't given a map, the location of the rooms do not change. I hope this helps you find your way.
 
         Good luck!
-
-        RPG Game
-        ========
-        Commands:
-        go [direction]
+        -------------------------------------------------------------------------------------------------------------------------------
         ''')
     
     def play_game(self):        
         active_game = True
-        choice = ""
+        self.player.location = random.randint(0, len(self.rooms) - 1) # Start player in random room
 
-        self.showInstructions()
+        self.show_instructions()
 
         while active_game:
             rooms_map_key = self.rooms_map[self.player.location] 
             room = rooms_map_key['room']
             doors = rooms_map_key['doors']
+            choice = ""
 
             #If room has key
             if (self.player.has_key == False) and (room.has_key):
-                print('Congrats, you have found the key! You can achieve victory by reaching the Garden')
+                print('~~~~~~ Congrats, you have found the key! You can achieve victory by reaching the Garden ~~~~~~')
+                print()
 
                 self.player.has_key = True
 
             #If room has potion
             if (room.potion):
-                print('You have found potion!')
+                print(f'You have found potion! It can give you up to {room.potion.strength} additional XP')
 
-                self.player.heal()
+                self.player.heal(room.potion)
+                room.potion = None
 
                 print(f'Your health is now: {self.player.xp}')
+                print()
 
             #If room has monster
             if (room.monster != None):
-                print(f'''Oh no you ran into a monster!!!
-                          It has a strength of {room.monster.strength} and has attacked you!
-                          Beware, the monster has jumped to a random room. Its still out there!!''')
+                print(f'''
+                Oh no you ran into a monster!!! It has a strength of {room.monster.strength} and has attacked you!
+                Beware, the monster has jumped to a random room. It's still out there!!
+                ''')
 
                 self.player.receive_damage(room.monster)
-                self.place_monster_in_new_room(room.monster)
+                self.place_monster_into_new_room(room.monster)
 
                 print(f'Your remaining xp is: {self.player.xp}')
+                print()
 
             #If xp <= 0
             if (self.player.xp <= 0):
@@ -281,11 +306,14 @@ class Game():
 
             #If room can transport to mystery room
             if (room.can_transport):
-                print(f'''This room has magical powers and can transport to a mystery room!
-                          The mystery room consists of healing potion, a monster, or direct access
-                          to the garden.''')
+                print(f'''
+                This room has magical powers and can transport to a mystery room!
+                The mystery room consists of healing potion, a monster, or direct access
+                to the garden.
+                ''')
 
                 visit_mystery_room = input('Would you like to visit mystery room?!? (y/n)').lower()
+                print()
 
                 if (visit_mystery_room == 'y'):
                     room = self.visit_mystery_room(room) # Updates room to garden or leaves as is
@@ -297,21 +325,23 @@ class Game():
                     exit()
 
                 print('Here is the fortune!! Unfortunately, you need the key to access it.')
+                print()
 
             while choice not in doors:
-                print(f'''{self.player}, you are located in {room}.
-                        You can go through the following doors: {doors}.
-                        Your health is {self.player.xp}
+                print(f'''
+                {self.player.name}, you are located in {room}. 
+                You can go through the following doors: {doors}. 
+                Your health is {self.player.xp}
                 ''')
 
                 choice = input('Which door would you like to enter? (Enter "quit" to end game)').title()
+                print()
 
                 if (choice.lower() == "quit"):
                     print('Goodbye!')
                     exit()
 
             self.enter_room(choice)
-        
 
 def main():
     game = Game()
@@ -323,72 +353,3 @@ def main():
 # Run Script
 if __name__ == "__main__":
     main()
-
-# LEFT OFF HERE #
-'''
-TODO: 
-    - Build game logic.
-        - if rooms[i].can_transport then handle_transport()
-        - build logic to check player health and end accordingly
-        - check whether user has delivered key to garden
-'''
-# Start Game
-play_game()
-
-
-showInstructions()
-
-# breaking this while loop means the game is over
-while True:
-    showStatus()
-
-    # the player MUST type something in
-    # otherwise input will keep asking
-    move = ''
-    while move == '':  
-        move = input('>')
-
-    # normalizing input:
-    # .lower() makes it lower case, .split() turns it to a list
-    # therefore, "get golden key" becomes ["get", "golden key"]          
-    move = move.lower().split(" ", 1)
-
-    #if they type 'go' first
-    if move[0] == 'go':
-        #check that they are allowed wherever they want to go
-        if move[1] in rooms[currentRoom]:
-            #set the current room to the new room
-            currentRoom = rooms[currentRoom][move[1]]
-        # if they aren't allowed to go that way:
-        else:
-            print('You can\'t go that way!')
-
-    #if they type 'get' first
-    elif move[0] == 'get' :
-        # make two checks:
-        # 1. if the current room contains an item
-        # 2. if the item in the room matches the item the player wishes to get
-        if "item" in rooms[currentRoom] and move[1] in rooms[currentRoom]['item']:
-            #add the item to their inventory
-            inventory.append(move[1])
-            #display a helpful message
-            print(move[1] + ' got!')
-            #delete the item key:value pair from the room's dictionary
-            del rooms[currentRoom]['item']
-        # if there's no item in the room or the item doesn't match
-        else:
-            #tell them they can't get it
-            print('Can\'t get ' + move[1] + '!')
-    else:
-        print('Invalid command.'
-
-    ## Define how a player can win
-    if currentRoom == 'Garden' and 'key' in inventory and 'potion' in inventory:
-        print('You escaped the house with the ultra rare key and magic potion... YOU WIN!')
-        break
-
-    ## If a player enters a room with a monster
-    if 'item' in rooms[currentRoom] and 'monster' in rooms[currentRoom]['item']:
-        print('A monster has got you... GAME OVER!')
-        break
-
