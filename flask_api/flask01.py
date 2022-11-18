@@ -27,12 +27,12 @@ def peach():
     return render_template('peach.html')
 
 @app.route('/my_cat', methods=["GET", "POST"])
-def my_cat(data={}):
+def my_cat(data={"cat_name": None, "fav_food": None, "fav_hobby": None, "fun_fact": None}):
     if request.method == 'POST':
         data = request.form
         return render_template('my_cat.html', cat_info=data)
 
-    return json.dumps({"cat_name": None, "fav_food": None, "fav_hobby": None, "fun_fact": None})
+    return json.dumps(data)
 
 @app.route('/new_cat')
 def new_cat():
