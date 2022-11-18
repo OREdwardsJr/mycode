@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
+<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
+<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
+<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
+<html>
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title></title>
+        <meta name="description" content="">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <link rel="stylesheet" href="">
+        <!-- Latest compiled and minified CSS -->
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+        <!-- jQuery library -->
+        <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+        <!-- Latest compiled JavaScript -->
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+    </head>
+    <body>
+        <!--[if lt IE 7]>
+            <p class="browsehappy">You are using an <strong>outdated</strong> browser. Please <a href="#">upgrade your browser</a> to improve your experience.</p>
+        <![endif]-->
+        <div class="container">
+            <div class="row">
+                <h1>Peach</h1>
+                <div class="col-md-8">
+                    <img src="{{ url_for('static', filename='peach1.jpg') }}" alt="" srcset="">
+                    <img src="{{ url_for('static', filename='peach2.jpeg') }}" alt="" srcset="">
+                    <img src="{{ url_for('static', filename='peach4.jpeg') }}" alt="" srcset="">
+                    <img src="{{ url_for('static', filename='peach5.jpeg') }}" alt="" srcset="">
+                </div>
+                <div class="col-md-4">
+                    <table class="table table-bordered">
+                        <tbody>
+                          <tr>
+                            <th scope="row">Favorite Food</th>
+                            <td>Fancy Feast Wet Food</td>
+                          </tr>
+                          <tr>
+                            <th scope="row">Favorite Hobby</th>
+                            <td>Chasing lasers, shadows, and her tail</td>
+                          </tr>
+                          <tr>
+                            <th scope="row">Fun Fact</th>
+                            <td colspan="2">Peach is super fast! She probably could compete in competitions.. if she was obedient :)</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                      <a href="/"><h3>Go Home</h3></a>
+                </div>
+            </div>
+            <div class="row">
+            </div>
+        </div>
+        <script src="" async defer></script>
+    </body>
+</html>

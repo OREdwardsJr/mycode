@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>These are my cats!</title>
+
+    <!-- Latest compiled and minified CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/css/bootstrap.min.css">
+
+    <!-- jQuery library -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+
+    <!-- Latest compiled JavaScript -->
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="row">
+            <div class="col-md-4"></div>
+            <div class="col-md-4">
+                <h1 style="text-align: center;">My Cats!</h1>
+                <img src="../assets/cats2.jpg" alt="" srcset="">
+                <a href="new_cat">
+                    <h3>Click here to tell me about your cat!</h3>
+                </a>
+            </div>
+            <div class="col-md-4"></div>
+        </div>
+        <div class="row">
+            <div class="col-md-6" style="display: flex; flex-direction: column; justify-content: center;">
+                <a href="pepper"> 
+                    <h3>Pepper (click to learn more!)</h3>
+                    <img src="{{ url_for('static', filename='pepper1.JPEG') }}" alt="" srcset="">
+                </a>
+            </div>
+            <div class="col-md-6" style="display: flex; flex-direction: column; justify-content: center;">
+                <a href="peach">
+                    <h3>Peach (click to learn more!)</h3>
+                    <img src="{{ url_for('static', filename='peach3.jpeg') }}" style="height: 700px; width: auto" alt="" srcset="">
+                </a>
+            </div>
+            </div>
+        </div>
+        <div class="row"></div>
+    </div>
+</body>
+</html>
